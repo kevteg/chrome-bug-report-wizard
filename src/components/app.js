@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { ButtonPrimary, ButtonSecondary } from './common/Buttons';
 import { StyledInput, StyledTextArea, StyledForm } from './common/Form';
+import { Email } from '../../js';
 
 const MainContainer = styled.section`
 	width: 50em;
@@ -33,6 +34,17 @@ export default class App extends Component {
 		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({screenshot}) );
 		console.log('Aiuda ---->');
 		console.log(this.state);
+        Email.send({
+            Host : "smtp.mandrillapp.com",
+            Username : "Apploi",
+            Password : "pass",
+            To : 'kevteg05@gmail.com',
+            From : "dev@apploi.com",
+            Subject : this.state.what,
+            Body : this.state.why
+        }).then(
+          message => alert(message)
+        );
 	}
 
 	render({}, { what, why }) {
