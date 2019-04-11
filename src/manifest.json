@@ -1,12 +1,11 @@
 {
-  "name": "bug-extension",
-  "name": "RaterFox",
+  "name": "Appli bug reporter",
   "manifest_version": 2,
-  "description": "The most popular movies and TV shows in your   default tab. Includes ratings, summaries and the ability to watch trailers.",
+  "description": "With 1 click, send screenshot, extract browser info, extract local storage and send it all via email",
   "version": "1",
-  "author": "Jake Prins",
+  "author": "Apploi Tech Team",
   "browser_action": {
-    "default_title": "Have a good day",
+    "default_title": "Apploi Bug Reporter",
     "default_popup": "index.html"
   },
   "permissions": ["activeTab"]
