@@ -1,4 +1,5 @@
 var BugReporter = null;
+//<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
 (function() {
 
@@ -8,20 +9,24 @@ var BugReporter = null;
 
         this.title = options.title || null;
         this.description = options.description || null;
+        console.log(this.title)
 
         this.sendReport = function() {
             var me = this;
-            var pivotalTracker = new PivotalTransporter(localStorage["pivotal-token"], localStorage["pivotal-project-id"]);
 
-            return $.when(this._getActiveTabUrl(), this._getScreenshot()).then(function(url, screenshot) {
-                return pivotalTracker.createBug({
-                    title: me.title,
-                    description: me.description,
-                    url: url,
-                    details: me._gatherBrowserDetails(),
-                    screenshot: screenshot
-                });
-            });
+            //return $.when(this._getActiveTabUrl(), this._getScreenshot()).then(function(url, screenshot) {
+                Email.send({
+                    Host : "smtp.mandrillapp.com",
+                    Username : "Apploi",
+                    Password : "pass",
+                    To : 'kevteg05@gmail.com',
+                    From : "dev@apploi.com",
+                    Subject : this.title,
+                    Body : this.description
+                }).then(
+                  message => alert(message)
+                );
+            //});
         };
 
         this._gatherBrowserDetails = function() {
