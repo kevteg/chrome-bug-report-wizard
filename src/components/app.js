@@ -30,6 +30,8 @@ export default class App extends Component {
 
 	handleSubmit = (e) => {
 		e.preventDefault();
+		this.storageDriver = new StorageDriver();
+		this.storageDriver.getStoragesInfo(this.showStorageInfo.bind(this));
 		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({screenshot}) );
 		console.log('Aiuda ---->');
 		console.log(this.state);
