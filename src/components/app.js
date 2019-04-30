@@ -41,8 +41,14 @@ export default class App extends Component {
 				<Content>
 					<span>Aiuda</span>
 					<StyledForm onSubmit={this.handleSubmit}>
-						<StyledInput name="what" value={what} onInput={this.handleChange} />
-						<StyledTextArea name="why" value={why} onInput={this.handleChange} />
+						<label>Your name</label>
+						<StyledTextArea name="name" onInput={this.handleChange} />
+						<label>Steps to reproduce</label>
+						<StyledTextArea name="steps" rows="6" placeholder="1. Ghost in as Faygee &#10;2. Click on &#10;3.&#10;" onInput={this.handleChange} />
+						<label>Results</label>
+						<StyledTextArea name="results" onInput={this.handleChange} />
+						<label>Expected Results</label>
+						<StyledTextArea name="expected_results" onInput={this.handleChange} />
 						<section className="options">
 							<ButtonSecondary type="button">Cancel</ButtonSecondary>
 							<ButtonPrimary className={``}>Send</ButtonPrimary>
