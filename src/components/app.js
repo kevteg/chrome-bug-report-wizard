@@ -1,14 +1,24 @@
 import { Component } from 'preact';
-import styled from 'styled-components';
+import styled, { injectGlobal } from 'styled-components';
 
 import { ButtonPrimary, ButtonSecondary } from './common/Buttons';
 import { StyledInput, StyledTextArea, StyledForm } from './common/Form';
 import { Email } from '../../js/smtp';
 
+injectGlobal`
+@font-face {
+	font-family: "Neutraface";
+	src: url("/assets/fonts/NeutraDisplay-Bold.otf") format("opentype");
+	font-weight: bold;
+	font-stretch: normal;
+	}
+`;
+
 const MainContainer = styled.section`
 	width: 50em;
 	height: 40em;
 	padding: 1em;
+	font-family: "Neutraface";
 `;
 
 const Content = styled.div`
@@ -37,6 +47,28 @@ export default class App extends Component {
 		results: '',
 		expected_results: '',
 		screenshot: null
+	}
+
+	componentDidMount = () => {
+		if (typeof chrome !== 'undefined') {
+			chrome.runtime.onMessage.addListener(
+				function(request, sender, sendResponse) {
+					console.log(sender.tab ?
+								"from a content script:" + sender.tab.url :
+								"from the extension");
+					console.log('GOT ---->')
+					console.log(request)
+				});
+		}
+	}
+
+	getStorage = () => {
+		console.log('Sending message ----->')
+		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+			chrome.tabs.sendMessage(tabs[0].id, {ask: true}, function(response) {
+				console.log('Sent ---->')
+			});
+		  });
 	}
 
 	handleChange = ({ target: { name, value } }) => {
@@ -73,7 +105,7 @@ export default class App extends Component {
 		const { screenshot } = this.state;
 		if (!screenshot) {
 			return (
-				<ButtonPrimary type="button" onClick={this.takeScreenshot}>Take Screenshot</ButtonPrimary>
+				<ButtonPrimary type="button" onClick={this.getStorage}>Take Screenshot</ButtonPrimary>
 			);
 		}
 		return (
