@@ -17,14 +17,25 @@ const Content = styled.div`
 		width: 100%;
 		text-align: center;
 	}
+	section.screenshot {
+		margin-top: 1rem;
+		margin: 1rem;
+		img {
+			width: 100%;
+			height: 100%;
+			object-fit: fill;
+		}
+	}
 `;
 
 export default class App extends Component {
 
 	state = {
-		what: '',
-		why: '',
-		screenshot: null,
+		name: '',
+		steps: '',
+		results: '',
+		expected_results: '',
+		screenshot: null
 	}
 
 	handleChange = ({ target: { name, value } }) => {
@@ -33,9 +44,29 @@ export default class App extends Component {
 
 	handleSubmit = (e) => {
 		e.preventDefault();
-		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({screenshot}) );
 		console.log('Aiuda ---->');
 		console.log(this.state);
+	}
+
+	takeScreenshot = () => {
+		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({screenshot}) );
+	}
+
+	couldSend = () => {
+		// For now
+		return true;
+	}
+
+	renderScreenshot = () => {
+		const { screenshot } = this.state;
+		if (!screenshot) {
+			return (
+				<ButtonPrimary type="button" onClick={this.takeScreenshot}>Take Screenshot</ButtonPrimary>
+			);
+		}
+		return (
+			<img src={screenshot} alt="screenshot" />
+		);
 	}
 
 	render({}, { what, why }) {
@@ -52,12 +83,18 @@ export default class App extends Component {
 						<StyledTextArea name="results" onInput={this.handleChange} />
 						<label>Expected Results</label>
 						<StyledTextArea name="expected_results" onInput={this.handleChange} />
-						<section className="options">
-							<ButtonSecondary type="button">Cancel</ButtonSecondary>
-							<ButtonPrimary className={``}>Send</ButtonPrimary>
+						<section className="screenshot">
+							{ this.renderScreenshot() }
 						</section>
+						{
+							this.couldSend() && (
+								<section className="options">
+									<ButtonSecondary type="button">Cancel</ButtonSecondary>
+									<ButtonPrimary className={``}>Send</ButtonPrimary>
+								</section>
+							)
+						}
 					</StyledForm>
-					<img src={this.state.screenshot} />
 				</Content>
 			</MainContainer>
 		);
