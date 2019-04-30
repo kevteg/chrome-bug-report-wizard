@@ -36,4 +36,8 @@ export const StyledForm = styled.form`
     button {
         margin-left: 1rem;
     }
+    label {
+        margin: 1rem 0;
+        font-weight: bold;
+    }
 `;

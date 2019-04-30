@@ -11,9 +11,12 @@ const MainContainer = styled.section`
 `;
 
 const Content = styled.div`
-	border: 2px solid black;
 	border-radius: 10px;
 	padding: 1em;
+	h1 {
+		width: 100%;
+		text-align: center;
+	}
 `;
 
 export default class App extends Component {
@@ -39,7 +42,7 @@ export default class App extends Component {
 		return (
 			<MainContainer>
 				<Content>
-					<span>Aiuda</span>
+					<h1>Apploi Bug Reporter</h1>
 					<StyledForm onSubmit={this.handleSubmit}>
 						<label>Your name</label>
 						<StyledTextArea name="name" onInput={this.handleChange} />
