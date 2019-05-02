@@ -142,7 +142,7 @@ export default class App extends Component {
 		}
 		Email.send({
 			SecureToken: "4aca5811-f806-4733-9cbe-fbf7d49e25a7",
-			To : 'bugs@apploi.com',
+			To : 'frank@apploi.com',
 			From : "dev@apploi.com",
 			Subject : 'Apploi Bug',
 			Body : `
@@ -197,13 +197,11 @@ export default class App extends Component {
 
 	renderScreenshot = () => {
 		const { screenshot } = this.state;
-		if (!screenshot) {
-			return (
-				<ButtonPrimary type="button" onClick={this.takeScreenshot}>Take Screenshot</ButtonPrimary>
-			);
-		}
 		return (
-			<img src={screenshot} alt="screenshot" />
+			<div>
+				{ screenshot && <img src={screenshot} alt="screenshot" /> }
+				<ButtonPrimary type="button" onClick={this.takeScreenshot}>Take Screenshot</ButtonPrimary>
+			</div>
 		);
 	}
 
@@ -246,14 +244,10 @@ export default class App extends Component {
 					<section className="screenshot">
 						{ this.renderScreenshot() }
 					</section>
-					{
-						this.couldSend() && (
-							<section className="options">
-								<ButtonSecondary type="button" onClick={this.closeExtension}>Cancel</ButtonSecondary>
-								{ this.couldSend() && <ButtonPrimary>Send</ButtonPrimary> }
-							</section>
-						)
-					}
+					<section className="options">
+						<ButtonSecondary type="button" onClick={this.closeExtension}>Cancel</ButtonSecondary>
+						{ this.couldSend() && <ButtonPrimary>Send</ButtonPrimary> }
+					</section>
 				</StyledForm>
 			</div>
 		);
