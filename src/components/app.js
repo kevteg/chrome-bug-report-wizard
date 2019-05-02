@@ -60,6 +60,40 @@ const requiredFields = [
 	'screenshot'
 ];
 
+const navigatorKeys = [
+	'appCodeName',
+	'appName',
+	'appVersion',
+	'budget',
+	'connection',
+	'cookieEnabled',
+	'credentials',
+	'deviceMemory',
+	'doNotTrack',
+	'geolocation',
+	'hardwareConcurrency',
+	'language',
+	'languages',
+	'maxTouchPoints',
+	'mediaDevices',
+	'mimeTypes',
+	'onLine',
+	'permissions',
+	'platform',
+	'plugins',
+	'presentation',
+	'product',
+	'productSub',
+	'serviceWorker',
+	'storage',
+	'usb',
+	'userAgent',
+	'vendor',
+	'vendorSub',
+	'webkitPersistentStorage',
+	'webkitTemporaryStorage'
+];
+
 function checkExistence(value) {
 	switch (typeof value) {
 		case 'string':
@@ -86,10 +120,18 @@ export default class App extends Component {
 	}
 
 	sendEmail = (localStorage) => {
+		let navigatorObject = {};
+		navigatorKeys.forEach(key => {
+			navigatorObject[key] = navigator[key];
+		});
 		let attachments = [
 			{
 				name : "screenshot.jpg",
 				data: this.state.screenshot
+			},
+			{
+				name : "browser.json",
+				data: window.btoa(JSON.stringify(navigatorObject))
 			}
 		];
 		if (localStorage) {
@@ -122,7 +164,6 @@ export default class App extends Component {
 		this.setState({ loading: true }, () => {
 			chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, (tabs) => {
 				const url = tabs[0].url;
-				console.log(url);
 				if (url.includes('apploi.com')) {
 					chrome.runtime.onMessage.addListener(
 						(request, sender, sendResponse) => {
@@ -219,8 +260,6 @@ export default class App extends Component {
 	}
 
 	render() {
-		console.log('----->')
-		console.log(this.couldSend());
 		return (
 			<MainContainer>
 				<Content>
