@@ -49,21 +49,15 @@ export default class App extends Component {
 		screenshot: null
 	}
 
-	componentDidMount = () => {
-		if (typeof chrome !== 'undefined') {
-			chrome.runtime.onMessage.addListener(
-				function(request, sender, sendResponse) {
-					console.log(sender.tab ?
-								"from a content script:" + sender.tab.url :
-								"from the extension");
-					console.log('GOT ---->')
-					console.log(request)
-				});
-		}
-	}
-
 	getStorage = () => {
-		console.log('Sending message ----->')
+		chrome.runtime.onMessage.addListener(
+			function(request, sender, sendResponse) {
+				console.log(sender.tab ?
+							"from a content script:" + sender.tab.url :
+							"from the extension");
+				console.log('GOT ---->')
+				console.log(request)
+			});
 		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 			chrome.tabs.sendMessage(tabs[0].id, {ask: true}, function(response) {
 				console.log('Sent ---->')
@@ -79,21 +73,24 @@ export default class App extends Component {
 		e.preventDefault();
 		console.log('Aiuda ---->');
 		console.log(this.state);
-        Email.send({
-            Host : "smtp.mandrillapp.com",
-            Username : "Apploi",
-            Password : "pass",
-            To : 'kevteg05@gmail.com',
-            From : "dev@apploi.com",
-            Subject : this.state.what,
-            Body : this.state.why
-        }).then(
-          message => alert(message)
-        );
+		Email.send({
+			SecureToken: "4aca5811-f806-4733-9cbe-fbf7d49e25a7",
+			To : 'mbolivar100@gmail.com',
+			From : "dev@apploi.com",
+			Subject : 'Problem Apploi',
+			Body : this.state.steps,
+			Attachments : [
+				{
+					name : "screenshot.jpg",
+					data: this.state.screenshot
+				}]
+		}).then(
+			message => alert('Sent ----->')
+		);
 	}
 
 	takeScreenshot = () => {
-		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({screenshot}) );
+		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({screenshot}, () => console.log(this.state)) );
 	}
 
 	couldSend = () => {
@@ -105,7 +102,7 @@ export default class App extends Component {
 		const { screenshot } = this.state;
 		if (!screenshot) {
 			return (
-				<ButtonPrimary type="button" onClick={this.getStorage}>Take Screenshot</ButtonPrimary>
+				<ButtonPrimary type="button" onClick={this.takeScreenshot}>Take Screenshot</ButtonPrimary>
 			);
 		}
 		return (
