@@ -1,6 +1,7 @@
 import { Component } from 'preact';
 import styled, { injectGlobal } from 'styled-components';
 
+import ApploiSpinner from './common/ApploiSpinner';
 import { ButtonPrimary, ButtonSecondary } from './common/Buttons';
 import { StyledInput, StyledTextArea, StyledForm } from './common/Form';
 import { Email } from '../../js/smtp';
@@ -24,6 +25,7 @@ const MainContainer = styled.section`
 const Content = styled.div`
 	border-radius: 10px;
 	padding: 1em;
+	height: 100%;
 	h1 {
 		width: 100%;
 		text-align: center;
@@ -38,6 +40,36 @@ const Content = styled.div`
 		}
 	}
 `;
+
+const DoneContainer = styled.div`
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	h2 {
+		margin-bottom: 1rem;
+	}
+`;
+
+const requiredFields = [
+	'name',
+	'steps',
+	'results',
+	'expected_results',
+	'screenshot'
+];
+
+function checkExistence(value) {
+	switch (typeof value) {
+		case 'string':
+			return value.length > 0;
+		case 'object':
+			return value && value.name;
+		default:
+			return false;
+	}
+}
 
 export default class App extends Component {
 
@@ -73,36 +105,38 @@ export default class App extends Component {
 			Subject : 'Problem Apploi',
 			Body : `
 			<ul>
-			<li>- Name: ${this.state.name}</li>
-			<li>- Steps: ${this.state.steps}</li>
-			<li>- Results: ${this.state.results}</li>
-			<li>- Expected Results: ${this.state.expected_results}</li>
+			<li>Name: ${this.state.name}</li>
+			<li>Steps: ${this.state.steps}</li>
+			<li>Results: ${this.state.results}</li>
+			<li>Expected Results: ${this.state.expected_results}</li>
 			</ul>
 			`,
 			Attachments : attachments
 		}).then(
-			message => alert('Sent ----->')
+			message => this.setState({ loading: false, done: true })
 		);
 	}
 
 	handleSubmit = (e) => {
 		e.preventDefault();
-		chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, (tabs) => {
-			const url = tabs[0].url;
-			console.log(url);
-			if (url.includes('apploi.com')) {
-				chrome.runtime.onMessage.addListener(
-					(request, sender, sendResponse) => {
-						this.sendEmail(request.local || {});
+		this.setState({ loading: true }, () => {
+			chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, (tabs) => {
+				const url = tabs[0].url;
+				console.log(url);
+				if (url.includes('apploi.com')) {
+					chrome.runtime.onMessage.addListener(
+						(request, sender, sendResponse) => {
+							this.sendEmail(request.local || {});
+						});
+					chrome.tabs.query({active: true, currentWindow: true }, (tabs) => {
+						chrome.tabs.sendMessage(tabs[0].id, { ask: true }, (response) => {
+							console.log('Sent ---->');
+						});
 					});
-				chrome.tabs.query({active: true, currentWindow: true }, (tabs) => {
-					chrome.tabs.sendMessage(tabs[0].id, { ask: true }, (response) => {
-						console.log('Sent ---->');
-					});
-				});
-			} else {
-				this.sendEmail(null);
-			}
+				} else {
+					this.sendEmail(null);
+				}
+			});
 		});
 	}
 
@@ -111,8 +145,13 @@ export default class App extends Component {
 	}
 
 	couldSend = () => {
-		// For now
-		return true;
+		let could = true;
+		requiredFields.forEach(key => {
+			if (!checkExistence(this.state[key])) {
+				could = false;
+			}
+		});
+		return could;
 	}
 
 	renderScreenshot = () => {
@@ -127,32 +166,65 @@ export default class App extends Component {
 		);
 	}
 
-	render({}, { what, why }) {
+	closeExtension = () => {
+		if (typeof window !== 'undefined') window.close()
+	}
+
+	renderContent = () => {
+		const {
+			name,
+			steps,
+			results,
+			expected_results,
+			loading,
+			done
+		} = this.state;
+		if (loading) {
+			return (<ApploiSpinner />);
+		}
+		if (done) {
+			return (
+				<DoneContainer>
+					<h2>Your request was sucessfully sent. Our team will reach you when appropriate.</h2>
+					<ButtonPrimary onClick={this.closeExtension}>Close</ButtonPrimary>
+				</DoneContainer>
+			);
+		}
+		return (
+			<div>
+				<h1>Apploi Bug Reporter</h1>
+				<StyledForm onSubmit={this.handleSubmit}>
+					<label>Your name</label>
+					<StyledTextArea value={name} name="name" onInput={this.handleChange} />
+					<label>Steps to reproduce</label>
+					<StyledTextArea value={steps} name="steps" rows="6" placeholder="1. Ghost in as Faygee &#10;2. Click on &#10;3.&#10;" onInput={this.handleChange} />
+					<label>Results</label>
+					<StyledTextArea value={results} name="results" onInput={this.handleChange} />
+					<label>Expected Results</label>
+					<StyledTextArea value={expected_results} name="expected_results" onInput={this.handleChange} />
+					<section className="screenshot">
+						{ this.renderScreenshot() }
+					</section>
+					{
+						this.couldSend() && (
+							<section className="options">
+								<ButtonSecondary type="button" onClick={this.closeExtension}>Cancel</ButtonSecondary>
+								{ this.couldSend() && <ButtonPrimary>Send</ButtonPrimary> }
+							</section>
+						)
+					}
+				</StyledForm>
+			</div>
+		);
+	}
+
+	render() {
+		console.log('----->')
+		console.log(this.couldSend());
 		return (
 			<MainContainer>
 				<Content>
-					<h1>Apploi Bug Reporter</h1>
-					<StyledForm onSubmit={this.handleSubmit}>
-						<label>Your name</label>
-						<StyledTextArea name="name" onInput={this.handleChange} />
-						<label>Steps to reproduce</label>
-						<StyledTextArea name="steps" rows="6" placeholder="1. Ghost in as Faygee &#10;2. Click on &#10;3.&#10;" onInput={this.handleChange} />
-						<label>Results</label>
-						<StyledTextArea name="results" onInput={this.handleChange} />
-						<label>Expected Results</label>
-						<StyledTextArea name="expected_results" onInput={this.handleChange} />
-						<section className="screenshot">
-							{ this.renderScreenshot() }
-						</section>
-						{
-							this.couldSend() && (
-								<section className="options">
-									<ButtonSecondary type="button">Cancel</ButtonSecondary>
-									<ButtonPrimary className={``}>Send</ButtonPrimary>
-								</section>
-							)
-						}
-					</StyledForm>
+					{ this.renderContent() }
 				</Content>
 			</MainContainer>
 		);

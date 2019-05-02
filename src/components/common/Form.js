@@ -28,6 +28,7 @@ export const StyledForm = styled.form`
     align-items: center;
     section.options {
         margin-top: 1rem;
+        margin-bottom: 1rem;
         width: 100%;
         display: flex;
         justify-content: flex-end;
