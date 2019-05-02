@@ -7,7 +7,7 @@ if (typeof chrome !== 'undefined') {
             if (request.ask) {
                 const local = localStorage;
                 chrome.runtime.sendMessage({ local }, function(response) {
-                    console.log(response.farewell);
+                    console.log(response);
                 });
             }
         });   

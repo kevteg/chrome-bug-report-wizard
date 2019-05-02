@@ -49,48 +49,65 @@ export default class App extends Component {
 		screenshot: null
 	}
 
-	getStorage = () => {
-		chrome.runtime.onMessage.addListener(
-			function(request, sender, sendResponse) {
-				console.log(sender.tab ?
-							"from a content script:" + sender.tab.url :
-							"from the extension");
-				console.log('GOT ---->')
-				console.log(request)
-			});
-		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-			chrome.tabs.sendMessage(tabs[0].id, {ask: true}, function(response) {
-				console.log('Sent ---->')
-			});
-		  });
-	}
-
 	handleChange = ({ target: { name, value } }) => {
 		this.setState({ [name]: value });
 	}
 
-	handleSubmit = (e) => {
-		e.preventDefault();
-		console.log('Aiuda ---->');
-		console.log(this.state);
+	sendEmail = (localStorage) => {
+		let attachments = [
+			{
+				name : "screenshot.jpg",
+				data: this.state.screenshot
+			}
+		];
+		if (localStorage) {
+			attachments.push({
+				name: "localstorage.json",
+				data: window.btoa(JSON.stringify(localStorage))
+			});
+		}
 		Email.send({
 			SecureToken: "4aca5811-f806-4733-9cbe-fbf7d49e25a7",
 			To : 'mbolivar100@gmail.com',
 			From : "dev@apploi.com",
 			Subject : 'Problem Apploi',
-			Body : this.state.steps,
-			Attachments : [
-				{
-					name : "screenshot.jpg",
-					data: this.state.screenshot
-				}]
+			Body : `
+			<ul>
+			<li>- Name: ${this.state.name}</li>
+			<li>- Steps: ${this.state.steps}</li>
+			<li>- Results: ${this.state.results}</li>
+			<li>- Expected Results: ${this.state.expected_results}</li>
+			</ul>
+			`,
+			Attachments : attachments
 		}).then(
 			message => alert('Sent ----->')
 		);
 	}
 
+	handleSubmit = (e) => {
+		e.preventDefault();
+		chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, (tabs) => {
+			const url = tabs[0].url;
+			console.log(url);
+			if (url.includes('apploi.com')) {
+				chrome.runtime.onMessage.addListener(
+					(request, sender, sendResponse) => {
+						this.sendEmail(request.local || {});
+					});
+				chrome.tabs.query({active: true, currentWindow: true }, (tabs) => {
+					chrome.tabs.sendMessage(tabs[0].id, { ask: true }, (response) => {
+						console.log('Sent ---->');
+					});
+				});
+			} else {
+				this.sendEmail(null);
+			}
+		});
+	}
+
 	takeScreenshot = () => {
-		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({screenshot}, () => console.log(this.state)) );
+		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({ screenshot }));
 	}
 
 	couldSend = () => {
