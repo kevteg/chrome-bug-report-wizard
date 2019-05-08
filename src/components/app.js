@@ -221,8 +221,6 @@ export default class App extends Component {
 
 	onError = (result) => {
 		if (result) {
-			console.log('ALGUNA SALIO ---->')
-			console.log(result)
 			if (result) {
 				this.setState({ loading: false }, () => {
 					alert('We had a problem, try reloading the page and send the bug again');
