@@ -141,7 +141,8 @@ export default class App extends Component {
 		results: '',
 		expected_results: '',
 		email: '',
-		screenshot: null
+		screenshot: null,
+		sending: false
 	}
 
 	clearLocalStorage = () => {
@@ -157,7 +158,11 @@ export default class App extends Component {
 				if (key !== 'screenshot') {
 					updateObject[key] = localStorage[key];
 				} else {
-					updateObject[key] = JSON.parse(localStorage[key]);
+					try {
+						updateObject[key] = JSON.parse(localStorage[key]);
+					} catch (error) {
+						updateObject[key] = null;
+					}
 				}
 			}
 		});
@@ -179,51 +184,58 @@ export default class App extends Component {
 	}
 
 	sendEmail = (tabLocalStorage) => {
-		let navigatorObject = {};
-		navigatorKeys.forEach(key => {
-			navigatorObject[key] = navigator[key];
-		});
-		let attachments = [
-			{
-				name: 'screenshot.jpg',
-				data: this.state.screenshot
-			},
-			{
-				name: 'browser.json',
-				data: window.btoa(JSON.stringify(navigatorObject))
-			}
-		];
-		if (tabLocalStorage) {
-			attachments.push({
-				name: 'localstorage.json',
-				data: window.btoa(JSON.stringify(tabLocalStorage))
+		if (!this.state.sending) {
+			this.setState({ sending: true }, () => {
+				let navigatorObject = {};
+				navigatorKeys.forEach(key => {
+					navigatorObject[key] = navigator[key];
+				});
+				let attachments = [
+					{
+						name: 'screenshot.jpg',
+						data: this.state.screenshot
+					},
+					{
+						name: 'browser.json',
+						data: window.btoa(JSON.stringify(navigatorObject))
+					}
+				];
+				if (tabLocalStorage) {
+					attachments.push({
+						name: 'localstorage.json',
+						data: window.btoa(JSON.stringify(tabLocalStorage))
+					});
+				}
+				Email.send({
+					SecureToken: '4aca5811-f806-4733-9cbe-fbf7d49e25a7',
+					To: ['frank@apploi.com', this.state.email],
+					From: 'dev@apploi.com',
+					Subject: `Apploi Bug - ${this.state.email}`,
+					Body: `
+					<ul>
+					<li>Name: ${this.state.name}</li>
+					<li>Steps to reproduce:</li>
+					${stepsFill(this.state.steps)}
+					<li>Results: ${this.state.results}</li>
+					<li>Expected Results: ${this.state.expected_results}</li>
+					</ul>
+					`,
+					Attachments: attachments
+				}).then(
+					message => this.setState({ loading: false, sending: false, done: true }, () => this.clearLocalStorage())
+				).catch(
+					error => this.setState({ loading: false, sending: false }, () => alert('We had a problem sending your email, please try it again'))
+				);
 			});
 		}
-		Email.send({
-			SecureToken: '4aca5811-f806-4733-9cbe-fbf7d49e25a7',
-			To: ['frank@apploi.com', this.state.email],
-			From: 'dev@apploi.com',
-			Subject: `Apploi Bug - ${this.state.email}`,
-			Body: `
-			<ul>
-			<li>Name: ${this.state.name}</li>
-			<li>Steps to reproduce:</li>
-			${stepsFill(this.state.steps)}
-			<li>Results: ${this.state.results}</li>
-			<li>Expected Results: ${this.state.expected_results}</li>
-			</ul>
-			`,
-			Attachments: attachments
-		}).then(
-			message => this.setState({ loading: false, done: true }, () => this.clearLocalStorage())
-		);
 	}
 
-	onError = (result) => {
+	onError = (result, tabId) => {
 		if (result) {
 			if (result) {
 				this.setState({ loading: false }, () => {
-					alert('We had a problem, try reloading the page and send the bug again');
+					alert('We had a problem, try again, if not, reload the page and try to send the bug again');
+					chrome.tabs.executeScript(tabId, { file: '/assets/js/storage.js' });
 				});
 			}
 		}
@@ -253,11 +265,11 @@ export default class App extends Component {
 						new Promise((resolve) => {
 							setTimeout(() => {
 								resolve(true);
-							}, 8000);
+							}, 5000);
 						})
 					])
-					.then(this.onError)
-					.catch(e => this.onError(true));
+					.then(result => this.onError(result, tabs[0].id))
+					.catch(e => this.onError(true, tabs[0].id));
 				} else {
 					this.sendEmail(null);
 				}
