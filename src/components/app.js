@@ -20,6 +20,9 @@ const MainContainer = styled.section`
 	height: 40em;
 	padding: 1em;
 	font-family: "Neutraface";
+	h1 {
+		font-size: 1.8rem;
+	}
 `;
 
 const Content = styled.div`
@@ -33,6 +36,11 @@ const Content = styled.div`
 	section.screenshot {
 		margin-top: 1rem;
 		margin: 1rem;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
 		img {
 			width: 100%;
 			height: 100%;
@@ -57,7 +65,8 @@ const requiredFields = [
 	'steps',
 	'results',
 	'expected_results',
-	'screenshot'
+	'screenshot',
+	'email'
 ];
 
 const navigatorKeys = [
@@ -94,6 +103,15 @@ const navigatorKeys = [
 	'webkitTemporaryStorage'
 ];
 
+const stateKeys = [
+	'name',
+	'steps',
+	'results',
+	'expected_results',
+	'screenshot',
+	'email'
+];
+
 function checkExistence(value) {
 	switch (typeof value) {
 		case 'string':
@@ -105,6 +123,16 @@ function checkExistence(value) {
 	}
 }
 
+function stepsFill(steps) {
+	const splitSteps = steps.split('\n');
+	let string = '<ul>'
+	splitSteps.forEach(step => {
+		string += `<li>${step}</li>`
+	});
+	string += '</ul>';
+	return string;
+}
+
 export default class App extends Component {
 
 	state = {
@@ -112,51 +140,95 @@ export default class App extends Component {
 		steps: '',
 		results: '',
 		expected_results: '',
+		email: '',
 		screenshot: null
 	}
 
-	handleChange = ({ target: { name, value } }) => {
-		this.setState({ [name]: value });
+	clearLocalStorage = () => {
+		stateKeys.forEach(key => {
+			delete(localStorage[key]);
+		});
 	}
 
-	sendEmail = (localStorage) => {
+	componentFromLocalStorage = () => {
+		let updateObject = {};
+		stateKeys.forEach(key => {
+			if (localStorage[key]) {
+				if (key !== 'screenshot') {
+					updateObject[key] = localStorage[key];
+				} else {
+					updateObject[key] = JSON.parse(localStorage[key]);
+				}
+			}
+		});
+		this.setState({ ...updateObject });
+	}
+
+	componentToLocalStorage = (key) => {
+		if (key !== 'screenshot') {
+			localStorage[key] = this.state[key];
+		} else {
+			localStorage[key] = JSON.stringify(this.state[key]);
+		}
+	}
+
+	handleChange = ({ target: { name, value } }) => {
+		this.setState({ [name]: value }, () => {
+			this.componentToLocalStorage(name);
+		});
+	}
+
+	sendEmail = (tabLocalStorage) => {
 		let navigatorObject = {};
 		navigatorKeys.forEach(key => {
 			navigatorObject[key] = navigator[key];
 		});
 		let attachments = [
 			{
-				name : "screenshot.jpg",
+				name: 'screenshot.jpg',
 				data: this.state.screenshot
 			},
 			{
-				name : "browser.json",
+				name: 'browser.json',
 				data: window.btoa(JSON.stringify(navigatorObject))
 			}
 		];
-		if (localStorage) {
+		if (tabLocalStorage) {
 			attachments.push({
-				name: "localstorage.json",
-				data: window.btoa(JSON.stringify(localStorage))
+				name: 'localstorage.json',
+				data: window.btoa(JSON.stringify(tabLocalStorage))
 			});
 		}
 		Email.send({
-			SecureToken: "4aca5811-f806-4733-9cbe-fbf7d49e25a7",
-			To : 'frank@apploi.com',
-			From : "dev@apploi.com",
-			Subject : 'Apploi Bug',
-			Body : `
+			SecureToken: '4aca5811-f806-4733-9cbe-fbf7d49e25a7',
+			To: ['frank@apploi.com', this.state.email],
+			From: 'dev@apploi.com',
+			Subject: `Apploi Bug - ${this.state.email}`,
+			Body: `
 			<ul>
 			<li>Name: ${this.state.name}</li>
-			<li>Steps: ${this.state.steps}</li>
+			<li>Steps to reproduce:</li>
+			${stepsFill(this.state.steps)}
 			<li>Results: ${this.state.results}</li>
 			<li>Expected Results: ${this.state.expected_results}</li>
 			</ul>
 			`,
-			Attachments : attachments
+			Attachments: attachments
 		}).then(
-			message => this.setState({ loading: false, done: true })
+			message => this.setState({ loading: false, done: true }, () => this.clearLocalStorage())
 		);
+	}
+
+	onError = (result) => {
+		if (result) {
+			console.log('ALGUNA SALIO ---->')
+			console.log(result)
+			if (result) {
+				this.setState({ loading: false }, () => {
+					alert('We had a problem, try reloading the page and send the bug again');
+				});
+			}
+		}
 	}
 
 	handleSubmit = (e) => {
@@ -165,15 +237,29 @@ export default class App extends Component {
 			chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, (tabs) => {
 				const url = tabs[0].url;
 				if (url.includes('apploi.com')) {
-					chrome.runtime.onMessage.addListener(
-						(request, sender, sendResponse) => {
-							this.sendEmail(request.local || {});
-						});
-					chrome.tabs.query({active: true, currentWindow: true }, (tabs) => {
-						chrome.tabs.sendMessage(tabs[0].id, { ask: true }, (response) => {
-							console.log('Sent ---->');
-						});
-					});
+					Promise.race([
+						new Promise((resolve, reject) => {
+							chrome.runtime.onMessage.addListener(
+								(request, sender, sendResponse) => {
+									resolve(false);
+									this.sendEmail(request.local || {});
+								});
+							setTimeout(() => {
+								chrome.tabs.query({active: true, currentWindow: true }, (tabs) => {
+									chrome.tabs.sendMessage(tabs[0].id, { ask: true }, (response) => {
+										console.log('Sent ---->');
+									});
+								});
+							}, 1000);
+						}),
+						new Promise((resolve) => {
+							setTimeout(() => {
+								resolve(true);
+							}, 8000);
+						})
+					])
+					.then(this.onError)
+					.catch(e => this.onError(true));
 				} else {
 					this.sendEmail(null);
 				}
@@ -182,7 +268,13 @@ export default class App extends Component {
 	}
 
 	takeScreenshot = () => {
-		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({ screenshot }));
+		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({ screenshot }, () => this.componentToLocalStorage('screenshot')));
+	}
+
+	checkValidEmail = () => {
+		const { email } = this.state;
+		const emailRegexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+		return !emailRegexp.test(email.toLowerCase());
 	}
 
 	couldSend = () => {
@@ -192,7 +284,18 @@ export default class App extends Component {
 				could = false;
 			}
 		});
+		if (this.checkValidEmail()) {
+			could = false;
+		}
 		return could;
+	}
+
+	closeExtension = () => {
+		if (typeof window !== 'undefined') window.close()
+	}
+
+	componentDidMount() {
+		this.componentFromLocalStorage();
 	}
 
 	renderScreenshot = () => {
@@ -205,10 +308,6 @@ export default class App extends Component {
 		);
 	}
 
-	closeExtension = () => {
-		if (typeof window !== 'undefined') window.close()
-	}
-
 	renderContent = () => {
 		const {
 			name,
@@ -216,7 +315,8 @@ export default class App extends Component {
 			results,
 			expected_results,
 			loading,
-			done
+			done,
+			email
 		} = this.state;
 		if (loading) {
 			return (<ApploiSpinner />);
@@ -231,10 +331,16 @@ export default class App extends Component {
 		}
 		return (
 			<div>
-				<h1>Apploi Bug Reporter</h1>
+				<h1>👾 Apploi Bug Reporter 👾</h1>
 				<StyledForm onSubmit={this.handleSubmit}>
 					<label>Your name</label>
 					<StyledTextArea value={name} name="name" onInput={this.handleChange} />
+					<div className="stacked">
+						<label>Your Email</label>
+						<label className="reminder">We'll send you a copy of this ticket ✍️</label>
+					</div>
+					<StyledTextArea value={email} name="email" onInput={this.handleChange} />
+					{ (email && this.checkValidEmail()) && <span className="error">Please enter a valid email</span> }
 					<label>Steps to reproduce</label>
 					<StyledTextArea value={steps} name="steps" rows="6" placeholder="1. Ghost in as Faygee &#10;2. Click on &#10;3.&#10;" onInput={this.handleChange} />
 					<label>Results</label>
@@ -242,6 +348,7 @@ export default class App extends Component {
 					<label>Expected Results</label>
 					<StyledTextArea value={expected_results} name="expected_results" onInput={this.handleChange} />
 					<section className="screenshot">
+						<label>Screenshot</label>
 						{ this.renderScreenshot() }
 					</section>
 					<section className="options">

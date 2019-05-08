@@ -40,5 +40,24 @@ export const StyledForm = styled.form`
     label {
         margin: 1rem 0;
         font-weight: bold;
+        font-size: 1.5rem;
+    }
+    label.reminder {
+        color: lightgrey;
+        color: grey;
+        font-size: 1rem;
+        margin-top: 0;
+    }
+    div.stacked {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    span.error {
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        color: red;
     }
 `;

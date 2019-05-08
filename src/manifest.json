@@ -1,12 +1,12 @@
 {
-  "name": "bug-extension",
-  "name": "RaterFox",
+  "name": "apploi-bug-reporter",
+  "name": "Apploi Bug Reporter",
   "manifest_version": 2,
-  "description": "The most popular movies and TV shows in your   default tab. Includes ratings, summaries and the ability to watch trailers.",
+  "description": "Apploi Bug Reporter. Let you take a screenshot from your current tab and file us the neccesary information to help you out.",
   "version": "1",
-  "author": "Jake Prins",
+  "author": "Apploi",
   "browser_action": {
-    "default_title": "Have a good day",
+    "default_title": "Apploi Bug Reporter",
     "default_popup": "index.html"
   },
   "permissions": ["activeTab", "storage"],
@@ -14,7 +14,8 @@
     {
       "matches": ["http://*.apploi.com/*", "https://*.apploi.com/*"],
       "all_frames": true,
-      "js": ["storage.js"]
+      "run_at": "document_start",
+      "js": ["/assets/js/storage.js"]
     }
   ]
 }
