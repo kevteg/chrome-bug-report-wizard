@@ -342,9 +342,7 @@ export default class App extends Component {
 								});
 							setTimeout(() => {
 								chrome.tabs.query({active: true, currentWindow: true }, (tabs) => {
-									chrome.tabs.sendMessage(tabs[0].id, { ask: true }, (response) => {
-										console.log('Sent ---->');
-									});
+									chrome.tabs.sendMessage(tabs[0].id, { ask: true });
 								});
 							}, 1000);
 						}),
