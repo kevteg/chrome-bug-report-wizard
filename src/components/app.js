@@ -5,6 +5,10 @@ import ApploiSpinner from './common/ApploiSpinner';
 import { ButtonPrimary, ButtonSecondary } from './common/Buttons';
 import { StyledInput, StyledTextArea, StyledForm } from './common/Form';
 import { Email } from '../../js/smtp';
+import Slider from "react-slick";
+
+import "slick-carousel/slick/slick.css"; 
+import "slick-carousel/slick/slick-theme.css";
 
 injectGlobal`
 @font-face {
@@ -13,6 +17,13 @@ injectGlobal`
 	font-weight: bold;
 	font-stretch: normal;
 	}
+`;
+
+const FlexContainerCenter = styled.div`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
 `;
 
 const MainContainer = styled.section`
@@ -37,10 +48,7 @@ const Content = styled.div`
 		margin-top: 1rem;
 		margin: 1rem;
 		width: 100%;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
+		display: block;
 		img {
 			width: 100%;
 			height: 100%;
@@ -112,6 +120,13 @@ const stateKeys = [
 	'email'
 ];
 
+const slideSettings = {
+	dots: false,
+	infinite: true,
+	slidesToShow: 1,
+	slidesToScroll: 1
+};
+
 function checkExistence(value) {
 	switch (typeof value) {
 		case 'string':
@@ -141,7 +156,7 @@ export default class App extends Component {
 		results: '',
 		expected_results: '',
 		email: '',
-		screenshot: null,
+		screenshot: [],
 		sending: false
 	}
 
@@ -192,10 +207,6 @@ export default class App extends Component {
 				});
 				let attachments = [
 					{
-						name: 'screenshot.jpg',
-						data: this.state.screenshot
-					},
-					{
 						name: 'browser.json',
 						data: window.btoa(JSON.stringify(navigatorObject))
 					}
@@ -206,6 +217,12 @@ export default class App extends Component {
 						data: window.btoa(JSON.stringify(tabLocalStorage))
 					});
 				}
+				this.state.screenshot.forEach((scs, index) => {
+					attachments.push({
+						name: `screenshot-${index}.jpg`,
+						data: scs
+					});
+				})
 				Email.send({
 					SecureToken: '4aca5811-f806-4733-9cbe-fbf7d49e25a7',
 					To: ['frank@apploi.com', this.state.email],
@@ -278,7 +295,13 @@ export default class App extends Component {
 	}
 
 	takeScreenshot = () => {
-		chrome.tabs.captureVisibleTab(null,{}, screenshot => this.setState({ screenshot }, () => this.componentToLocalStorage('screenshot')));
+		const { screenshot } = this.state;
+		chrome.tabs.captureVisibleTab(null,{}, scs => this.setState({ screenshot: [...screenshot, scs] }, () => {
+			this.componentToLocalStorage('screenshot');
+			if (this.slick) {
+				this.slick.slickNext();
+			}
+		})); 
 	}
 
 	checkValidEmail = () => {
@@ -308,16 +331,34 @@ export default class App extends Component {
 		this.componentFromLocalStorage();
 	}
 
+	renderCarousel = () => {
+		const { screenshot } = this.state;
+		return (
+			<Slider ref={slick => this.slick = slick} {...slideSettings}>
+				{ screenshot.map(scs => (
+					<img src={scs} />
+				)) }
+			</Slider>
+		);
+	}
+
+
 	renderScreenshot = () => {
 		const { screenshot } = this.state;
 		return (
 			<div>
-				{ screenshot && <img src={screenshot} alt="screenshot" /> }
-				<ButtonPrimary type="button" onClick={this.takeScreenshot}>Take Screenshot</ButtonPrimary>
+				<div className="slick">
+					{ screenshot.length > 0 && this.renderCarousel() }
+				</div>
+				{ screenshot.length < 4 && (
+					<FlexContainerCenter>
+						<ButtonPrimary type="button" onClick={this.takeScreenshot}>Take Screenshot</ButtonPrimary>
+					</FlexContainerCenter>
+				)}
 			</div>
 		);
 	}
-
+	
 	renderContent = () => {
 		const {
 			name,
@@ -358,7 +399,9 @@ export default class App extends Component {
 					<label>Expected Results</label>
 					<StyledTextArea value={expected_results} name="expected_results" onInput={this.handleChange} />
 					<section className="screenshot">
-						<label>Screenshot</label>
+						<FlexContainerCenter>
+							<label>Screenshot</label>
+						</FlexContainerCenter>
 						{ this.renderScreenshot() }
 					</section>
 					<section className="options">
