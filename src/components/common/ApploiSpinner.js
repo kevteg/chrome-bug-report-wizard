@@ -48,7 +48,7 @@ const ApploiSpinner = () => (
                 <FillContainer />
             </Gif>
         </Container>
-        <h2>Sending...</h2>
+        <h2>Sending, please do not close this until it's done...</h2>
     </MessageContainer>
 );
 

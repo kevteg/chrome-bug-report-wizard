@@ -19,6 +19,46 @@ injectGlobal`
 	}
 `;
 
+const SlideButton = styled.button`
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	border: none;
+	color: white;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	transition: all .5s ease-in-out;
+	z-index: 15;
+	font-weight: bold;
+	&::before {
+		color: #23241f;
+	}
+	&:hover {
+		border: 2px solid #23241f;
+	}
+	&.slick-next {
+		margin-right: .5rem;
+	}
+	&.slick-prev {
+		margin-left: .5rem;
+	}
+	&:focus {
+		color: #23241f;
+	}
+	&.delete-screenshot {
+		position: absolute;
+		top: 5%;
+		right: 5%;
+		background-color: #23241f;
+		color: white;
+		cursor: pointer;
+		&:hover {
+			border: 2px solid white !important;
+		}
+	}
+`;
+
 const FlexContainerCenter = styled.div`
 	display: flex;
 	justify-content: center;
@@ -54,6 +94,11 @@ const Content = styled.div`
 			height: 100%;
 			object-fit: fill;
 		}
+		div.screenshot-item {
+			width: 100%;
+			height: 100%;
+			position: relative;
+		}
 	}
 `;
 
@@ -67,6 +112,28 @@ const DoneContainer = styled.div`
 		margin-bottom: 1rem;
 	}
 `;
+
+const NextArrow = (props) => (
+	<SlideButton {...props} />
+);
+
+const PrevArrow = (props) => (
+	<SlideButton {...props} />
+);
+
+const DeleteScreenshot = ({ index, deleteAction }) => {
+
+	function callToAction() {
+		deleteAction(index);
+	}
+
+	return (
+		<SlideButton type="button" className="delete-screenshot" onClick={callToAction}>
+			X
+		</SlideButton>
+	);
+
+};
 
 const requiredFields = [
 	'name',
@@ -124,7 +191,9 @@ const slideSettings = {
 	dots: false,
 	infinite: true,
 	slidesToShow: 1,
-	slidesToScroll: 1
+	slidesToScroll: 1,
+	nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />
 };
 
 function checkExistence(value) {
@@ -132,7 +201,7 @@ function checkExistence(value) {
 		case 'string':
 			return value.length > 0;
 		case 'object':
-			return value && value.name;
+			return value && value.length > 0;
 		default:
 			return false;
 	}
@@ -140,9 +209,9 @@ function checkExistence(value) {
 
 function stepsFill(steps) {
 	const splitSteps = steps.split('\n');
-	let string = '<ul>'
+	let string = '<ul>';
 	splitSteps.forEach(step => {
-		string += `<li>${step}</li>`
+		string += `<li>${step}</li>`;
 	});
 	string += '</ul>';
 	return string;
@@ -219,10 +288,10 @@ export default class App extends Component {
 				}
 				this.state.screenshot.forEach((scs, index) => {
 					attachments.push({
-						name: `screenshot-${index}.jpg`,
+						name: `screenshot-${index + 1}.jpg`,
 						data: scs
 					});
-				})
+				});
 				Email.send({
 					SecureToken: '4aca5811-f806-4733-9cbe-fbf7d49e25a7',
 					To: ['frank@apploi.com', this.state.email],
@@ -299,7 +368,7 @@ export default class App extends Component {
 		chrome.tabs.captureVisibleTab(null,{}, scs => this.setState({ screenshot: [...screenshot, scs] }, () => {
 			this.componentToLocalStorage('screenshot');
 			if (this.slick) {
-				this.slick.slickNext();
+				this.slick.slickGoTo(screenshot.length);
 			}
 		})); 
 	}
@@ -327,6 +396,14 @@ export default class App extends Component {
 		if (typeof window !== 'undefined') window.close()
 	}
 
+	deleteScreenshot = (deleteIndex) => {
+		const { screenshot } = this.state;
+		const filteredScreenshots = screenshot.filter((_, index) => index !== deleteIndex);
+		this.setState({ screenshot: filteredScreenshots }, () => {
+			this.componentToLocalStorage('screenshot');
+		});
+	}
+
 	componentDidMount() {
 		this.componentFromLocalStorage();
 	}
@@ -335,8 +412,11 @@ export default class App extends Component {
 		const { screenshot } = this.state;
 		return (
 			<Slider ref={slick => this.slick = slick} {...slideSettings}>
-				{ screenshot.map(scs => (
-					<img src={scs} />
+				{ screenshot.map((scs, index) => (
+					<div className="screenshot-item">
+						<img src={scs} />
+						<DeleteScreenshot deleteAction={this.deleteScreenshot} index={index} />
+					</div>
 				)) }
 			</Slider>
 		);
