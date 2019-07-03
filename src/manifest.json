@@ -9,7 +9,7 @@
     "default_title": "Apploi Bug Reporter",
     "default_popup": "index.html"
   },
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "tabs"],
   "content_scripts": [
     {
       "matches": ["http://*.apploi.com/*", "https://*.apploi.com/*"],

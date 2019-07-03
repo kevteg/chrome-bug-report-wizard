@@ -330,7 +330,7 @@ export default class App extends Component {
 	handleSubmit = (e) => {
 		e.preventDefault();
 		this.setState({ loading: true }, () => {
-			chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, (tabs) => {
+			chrome.tabs.query({ 'currentWindow': true, 'active': true }, (tabs) => {
 				const url = tabs[0].url;
 				if (url.includes('apploi.com')) {
 					Promise.race([
