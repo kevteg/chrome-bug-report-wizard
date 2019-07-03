@@ -19,6 +19,16 @@ injectGlobal`
 	}
 `;
 
+function base64EncodeUnicode(str) {
+    // First we escape the string using encodeURIComponent to get the UTF-8 encoding of the characters, 
+    // then we convert the percent encodings into raw bytes, and finally feed it to btoa() function.
+    const utf8Bytes = encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+            return String.fromCharCode('0x' + p1);
+    });
+
+    return window.btoa(utf8Bytes);
+}
+
 const SlideButton = styled.button`
 	width: 2rem;
 	height: 2rem;
@@ -277,13 +287,13 @@ export default class App extends Component {
 				let attachments = [
 					{
 						name: 'browser.json',
-						data: window.btoa(JSON.stringify(navigatorObject))
+						data: base64EncodeUnicode(JSON.stringify(navigatorObject))
 					}
 				];
 				if (tabLocalStorage) {
 					attachments.push({
 						name: 'localstorage.json',
-						data: window.btoa(JSON.stringify(tabLocalStorage))
+						data: base64EncodeUnicode(JSON.stringify(tabLocalStorage))
 					});
 				}
 				this.state.screenshot.forEach((scs, index) => {
