@@ -1,21 +1,21 @@
 import { Component } from 'preact';
-import styled, { injectGlobal } from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 
 import ApploiSpinner from './common/ApploiSpinner';
 import { ButtonPrimary, ButtonSecondary } from './common/Buttons';
-import { StyledInput, StyledTextArea, StyledForm } from './common/Form';
+import { StyledTextArea, StyledForm } from './common/Form';
 import { Email } from '../../js/smtp';
 import Slider from "react-slick";
 
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
 
-injectGlobal`
-@font-face {
-	font-family: "Neutraface";
-	src: url("/assets/fonts/NeutraDisplay-Bold.otf") format("opentype");
-	font-weight: bold;
-	font-stretch: normal;
+const GlobalStyling = createGlobalStyle`
+	@font-face {
+		font-family: "Neutraface";
+		src: url("/assets/fonts/NeutraDisplay-Bold.otf") format("opentype");
+		font-weight: bold;
+		font-stretch: normal;
 	}
 `;
 
@@ -304,7 +304,7 @@ export default class App extends Component {
 				});
 				Email.send({
 					SecureToken: '4aca5811-f806-4733-9cbe-fbf7d49e25a7',
-					To: ['frank@apploi.com', this.state.email],
+					To: ['mbolivar100@gmail.com', this.state.email],
 					From: 'dev@apploi.com',
 					Subject: `Apploi Bug - ${this.state.email}`,
 					Body: `
@@ -504,6 +504,7 @@ export default class App extends Component {
 	render() {
 		return (
 			<MainContainer>
+				<GlobalStyling />
 				<Content>
 					{ this.renderContent() }
 				</Content>
