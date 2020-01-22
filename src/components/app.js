@@ -41,11 +41,11 @@ const SlideButton = styled.button`
 	transition: all .5s ease-in-out;
 	z-index: 15;
 	font-weight: bold;
+	background-color: #23241f;
+		color: white;
+		cursor: pointer;
 	&::before {
 		color: #23241f;
-	}
-	&:hover {
-		border: 2px solid #23241f;
 	}
 	&.slick-next {
 		margin-right: .5rem;
@@ -66,6 +66,9 @@ const SlideButton = styled.button`
 		&:hover {
 			border: 2px solid white !important;
 		}
+	}
+	&.slick-prev:before {
+		color: #23241f !important;
 	}
 `;
 
@@ -463,7 +466,7 @@ export default class App extends Component {
 		if (done) {
 			return (
 				<DoneContainer>
-					<h2>Your request was sucessfully sent. Our team will reach you when appropriate.</h2>
+					<h2>Your request was successfully sent. Our team will reach you when appropriate.</h2>
 					<ButtonPrimary onClick={this.closeExtension}>Close</ButtonPrimary>
 				</DoneContainer>
 			);
