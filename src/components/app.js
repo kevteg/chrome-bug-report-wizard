@@ -114,7 +114,7 @@ export default class App extends Component {
 				});
 				Email.send({
 					SecureToken: '4aca5811-f806-4733-9cbe-fbf7d49e25a7',
-					To: ['mbolivar100@gmail.com', this.state.email],
+					To: ['bugs@apploi.com', this.state.email],
 					From: 'dev@apploi.com',
 					Subject: `Apploi Bug - ${this.state.email}`,
 					Body: `

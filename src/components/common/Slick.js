@@ -33,7 +33,7 @@ export const SlideButton = styled.button`
 		right: 5%;
 		background-color: #23241f;
 		color: white;
-        padding-top: .2rem;
+        padding-top: 0.2rem;
 		cursor: pointer;
 		&:hover {
 			border: 2px solid white !important;
