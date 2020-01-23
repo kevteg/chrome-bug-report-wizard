@@ -1,138 +1,27 @@
 import { Component } from 'preact';
-import styled, { createGlobalStyle } from 'styled-components';
-
-import ApploiSpinner from './common/ApploiSpinner';
+import Slider from "react-slick";
+import { GlobalStyling } from './common/Global';
 import { ButtonPrimary, ButtonSecondary } from './common/Buttons';
 import { StyledTextArea, StyledForm } from './common/Form';
+import ApploiSpinner from './common/ApploiSpinner';
+import {
+	MainContainer,
+	Content,
+	FlexContainerCenter,
+	DoneContainer
+} from './common/Misc';
+import {
+	base64EncodeUnicode,
+	checkExistence,
+	stepsFill
+} from '../utils';
+import { SlideButton } from './common/Slick';
+import { slideSettings } from '../settings';
+import { requiredFields, navigatorKeys, stateKeys } from '../constants';
 import { Email } from '../../js/smtp';
-import Slider from "react-slick";
 
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
-
-const GlobalStyling = createGlobalStyle`
-	@font-face {
-		font-family: "Neutraface";
-		src: url("/assets/fonts/NeutraDisplay-Bold.otf") format("opentype");
-		font-weight: bold;
-		font-stretch: normal;
-	}
-`;
-
-function base64EncodeUnicode(str) {
-    // First we escape the string using encodeURIComponent to get the UTF-8 encoding of the characters, 
-    // then we convert the percent encodings into raw bytes, and finally feed it to btoa() function.
-    const utf8Bytes = encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-            return String.fromCharCode('0x' + p1);
-    });
-
-    return window.btoa(utf8Bytes);
-}
-
-const SlideButton = styled.button`
-	width: 2rem;
-	height: 2rem;
-	border-radius: 50%;
-	border: none;
-	color: white;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	transition: all .5s ease-in-out;
-	z-index: 15;
-	font-weight: bold;
-	background-color: #23241f;
-		color: white;
-		cursor: pointer;
-	&::before {
-		color: #23241f;
-	}
-	&.slick-next {
-		margin-right: .5rem;
-	}
-	&.slick-prev {
-		margin-left: .5rem;
-	}
-	&:focus {
-		color: #23241f;
-	}
-	&.delete-screenshot {
-		position: absolute;
-		top: 5%;
-		right: 5%;
-		background-color: #23241f;
-		color: white;
-		cursor: pointer;
-		&:hover {
-			border: 2px solid white !important;
-		}
-	}
-	&.slick-prev:before {
-		color: #23241f !important;
-	}
-`;
-
-const FlexContainerCenter = styled.div`
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: 100%;
-`;
-
-const MainContainer = styled.section`
-	width: 50em;
-	height: 40em;
-	padding: 1em;
-	font-family: "Neutraface";
-	h1 {
-		font-size: 1.8rem;
-	}
-`;
-
-const Content = styled.div`
-	border-radius: 10px;
-	padding: 1em;
-	height: 100%;
-	h1 {
-		width: 100%;
-		text-align: center;
-	}
-	section.screenshot {
-		margin-top: 1rem;
-		margin: 1rem;
-		width: 100%;
-		display: block;
-		img {
-			width: 100%;
-			height: 100%;
-			object-fit: fill;
-		}
-		div.screenshot-item {
-			width: 100%;
-			height: 100%;
-			position: relative;
-		}
-	}
-`;
-
-const DoneContainer = styled.div`
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	h2 {
-		margin-bottom: 1rem;
-	}
-`;
-
-const NextArrow = (props) => (
-	<SlideButton {...props} />
-);
-
-const PrevArrow = (props) => (
-	<SlideButton {...props} />
-);
 
 const DeleteScreenshot = ({ index, deleteAction }) => {
 
@@ -147,88 +36,6 @@ const DeleteScreenshot = ({ index, deleteAction }) => {
 	);
 
 };
-
-const requiredFields = [
-	'name',
-	'steps',
-	'results',
-	'expected_results',
-	'screenshot',
-	'email'
-];
-
-const navigatorKeys = [
-	'appCodeName',
-	'appName',
-	'appVersion',
-	'budget',
-	'connection',
-	'cookieEnabled',
-	'credentials',
-	'deviceMemory',
-	'doNotTrack',
-	'geolocation',
-	'hardwareConcurrency',
-	'language',
-	'languages',
-	'maxTouchPoints',
-	'mediaDevices',
-	'mimeTypes',
-	'onLine',
-	'permissions',
-	'platform',
-	'plugins',
-	'presentation',
-	'product',
-	'productSub',
-	'serviceWorker',
-	'storage',
-	'usb',
-	'userAgent',
-	'vendor',
-	'vendorSub',
-	'webkitPersistentStorage',
-	'webkitTemporaryStorage'
-];
-
-const stateKeys = [
-	'name',
-	'steps',
-	'results',
-	'expected_results',
-	'screenshot',
-	'email'
-];
-
-const slideSettings = {
-	dots: false,
-	infinite: true,
-	slidesToShow: 1,
-	slidesToScroll: 1,
-	nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />
-};
-
-function checkExistence(value) {
-	switch (typeof value) {
-		case 'string':
-			return value.length > 0;
-		case 'object':
-			return value && value.length > 0;
-		default:
-			return false;
-	}
-}
-
-function stepsFill(steps) {
-	const splitSteps = steps.split('\n');
-	let string = '<ul>';
-	splitSteps.forEach(step => {
-		string += `<li>${step}</li>`;
-	});
-	string += '</ul>';
-	return string;
-}
 
 export default class App extends Component {
 
